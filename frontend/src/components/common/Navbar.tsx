@@ -1,33 +1,32 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ShieldCheck, LogOut, User as UserIcon } from 'lucide-react';
 import { SystemHealthBadge } from '../SystemHealthBadge';
 import { useAuth } from '../../context/AuthContext';
 
 export const Navbar: React.FC = () => {
   const { user, isAuthenticated, isAdmin, logout, openAuthModal } = useAuth();
+  const location = useLocation();
+
+  // Dynamic conditional visibility: Hidden on landing page ('/' or '/landing'), visible on all other pages
+  const isLandingPage = location.pathname === '/' || location.pathname === '/landing';
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
-        {/* 1. Brand / "About Us" Link */}
+        {/* 1. Brand Logo Area (Clean & prominent without secondary navigation subtext) */}
         <Link
           to="/"
           className="flex items-center space-x-3 group"
-          title="CertiShield AI • About Us & Multi-Modal Architecture"
+          title="CertiShield AI • Forensic Certificate Verification"
         >
           <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-500 text-white shadow-lg shadow-emerald-500/25 group-hover:scale-105 transition-all">
             <ShieldCheck className="w-5 h-5" />
           </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="font-extrabold text-base tracking-tight text-white font-display">
-                CertiShield AI
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400">
-              About Us &bull; Forensic Architecture
-            </p>
+          <div className="flex items-center space-x-2">
+            <span className="font-extrabold text-base tracking-tight text-white font-display">
+              CertiShield AI
+            </span>
           </div>
         </Link>
 
@@ -36,8 +35,20 @@ export const Navbar: React.FC = () => {
           <SystemHealthBadge />
         </div>
 
-        {/* 3. Account Action (Login / Register or User Avatar & Assigned Workspace) */}
-        <div className="flex items-center">
+        {/* 3. Account Action (About Us button + Login / Register or User Avatar & Assigned Workspace) */}
+        <div className="flex items-center space-x-3">
+          {/* About Us Button: State-aware, conditionally rendered immediately before Login/Register or profile menu */}
+          {!isLandingPage && (
+            <Link
+              to="/"
+              id="nav-about-us-btn"
+              data-testid="nav-about-us-btn"
+              className="px-3.5 py-1.5 text-xs font-semibold text-slate-300 hover:text-white bg-slate-900/80 hover:bg-slate-800/90 border border-slate-700/80 hover:border-slate-600 rounded-xl transition-all duration-150 shadow-sm flex items-center space-x-1.5 cursor-pointer"
+              title="Navigate to Landing Page & Overview"
+            >
+              <span>About Us</span>
+            </Link>
+          )}
           {isAuthenticated && user ? (
             <div className="flex items-center space-x-2.5 sm:space-x-3">
               {/* User Avatar & Role Badge (Optionally links to assigned console) */}

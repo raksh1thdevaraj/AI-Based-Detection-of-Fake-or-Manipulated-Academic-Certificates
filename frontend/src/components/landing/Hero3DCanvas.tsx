@@ -2,6 +2,313 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { ShieldCheck, Scan, Layers } from 'lucide-react';
 
+/**
+ * Procedural 2D Canvas Renderer for the VTU Convocation Certificate Texture.
+ * Renders high-fidelity VTU emblem, security guilloche borders, candidate name,
+ * USN, holographic seal, and Controller of Examinations digital stamp.
+ */
+export function renderVTUCertificateCanvas(ctx: CanvasRenderingContext2D): void {
+  // Dark luxurious parchment background
+  const bgGrad = ctx.createLinearGradient(0, 0, 1024, 1448);
+  bgGrad.addColorStop(0, '#0f172a');
+  bgGrad.addColorStop(0.5, '#131d36');
+  bgGrad.addColorStop(1, '#0b1120');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, 1024, 1448);
+
+  // Guilloche ornate double border
+  ctx.strokeStyle = 'rgba(16, 185, 129, 0.6)';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(36, 36, 952, 1376);
+
+  ctx.strokeStyle = 'rgba(6, 182, 212, 0.4)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(52, 52, 920, 1344);
+
+  // Micro-pattern security corner accents
+  const drawCorner = (x: number, y: number, angle: number) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.strokeStyle = '#10B981';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(40, 0);
+    ctx.lineTo(40, 40);
+    ctx.stroke();
+    ctx.restore();
+  };
+  drawCorner(70, 70, 0);
+  drawCorner(954, 70, Math.PI / 2);
+  drawCorner(954, 1378, Math.PI);
+  drawCorner(70, 1378, -Math.PI / 2);
+
+  // --- VTU EMBLEM PLACEHOLDER (Center-Top) ---
+  ctx.save();
+  ctx.translate(512, 175);
+
+  // Gear cog teeth around perimeter (VTU engineering motif)
+  ctx.fillStyle = 'rgba(245, 158, 11, 0.85)'; // gold
+  for (let i = 0; i < 24; i++) {
+    ctx.rotate((Math.PI * 2) / 24);
+    ctx.fillRect(-5, -68, 10, 12);
+  }
+
+  // Outer gold circle
+  ctx.beginPath();
+  ctx.arc(0, 0, 64, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(245, 158, 11, 0.9)';
+  ctx.lineWidth = 3.5;
+  ctx.stroke();
+
+  // Emerald inner border ring
+  ctx.beginPath();
+  ctx.arc(0, 0, 52, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(16, 185, 129, 0.8)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Center VTU Monogram & Foundation Year
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 36px serif';
+  ctx.fillText('VTU', 0, 8);
+  ctx.font = 'bold 11px monospace';
+  ctx.fillStyle = 'rgba(52, 211, 153, 0.9)';
+  ctx.fillText('ESTD 1998', 0, 26);
+  ctx.restore();
+
+  // --- 1. INSTITUTION TITLE & SUBHEADER ---
+  ctx.textAlign = 'center';
+
+  // Primary header
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 32px serif';
+  ctx.fillText('VISVESVARAYA TECHNOLOGICAL UNIVERSITY', 512, 282);
+
+  // Subtitle / Regional headquarters
+  ctx.fillStyle = 'rgba(52, 211, 153, 0.95)';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText('Jnana Sangama, Belagavi, Karnataka - 590018', 512, 318);
+
+  // Decorative divider
+  ctx.strokeStyle = 'rgba(16, 185, 129, 0.5)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(140, 355);
+  ctx.lineTo(884, 355);
+  ctx.stroke();
+
+  // Diploma category subtitle
+  ctx.fillStyle = 'rgba(245, 158, 11, 0.9)';
+  ctx.font = 'bold 18px monospace';
+  ctx.fillText('OFFICIAL DEGREE CONVOCATION CERTIFICATE', 512, 388);
+
+  // --- 2. UNIVERSITY SEAT NUMBER (USN) FIELD ---
+  ctx.save();
+  const usnBoxX = 262;
+  const usnBoxY = 412;
+  const usnBoxW = 500;
+  const usnBoxH = 68;
+
+  // Dark emerald glass background with border
+  ctx.fillStyle = 'rgba(6, 78, 59, 0.35)';
+  ctx.fillRect(usnBoxX, usnBoxY, usnBoxW, usnBoxH);
+  ctx.strokeStyle = 'rgba(16, 185, 129, 0.85)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(usnBoxX, usnBoxY, usnBoxW, usnBoxH);
+
+  // USN Label
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(52, 211, 153, 0.95)';
+  ctx.font = 'bold 12px monospace';
+  ctx.fillText('UNIVERSITY SEAT NUMBER (USN)', 512, 434);
+
+  // USN Number Value
+  ctx.fillStyle = '#38bdf8';
+  ctx.font = 'bold 28px monospace';
+  ctx.fillText('1RE22CS089', 512, 466);
+
+  // Micro badge inside USN box
+  ctx.font = 'bold 10px monospace';
+  ctx.fillStyle = 'rgba(16, 185, 129, 0.9)';
+  ctx.fillText('[AUTHENTICATED]', 700, 452);
+  ctx.restore();
+
+  // --- CANDIDATE CITATION ---
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(203, 213, 225, 0.9)';
+  ctx.font = 'italic 23px serif';
+  ctx.fillText('This is to certify that', 512, 520);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 40px sans-serif';
+  ctx.fillText('RAKSHITH DEVARAJ', 512, 572);
+
+  ctx.fillStyle = 'rgba(148, 163, 184, 0.85)';
+  ctx.font = '20px sans-serif';
+  ctx.fillText('has fulfilled all academic requirements and is duly admitted to the Degree of', 512, 622);
+
+  ctx.fillStyle = 'rgba(245, 158, 11, 0.95)';
+  ctx.font = 'bold 30px serif';
+  ctx.fillText('BACHELOR OF ENGINEERING', 512, 668);
+
+  ctx.fillStyle = 'rgba(6, 182, 212, 0.95)';
+  ctx.font = 'bold 23px sans-serif';
+  ctx.fillText('IN COMPUTER SCIENCE AND ENGINEERING', 512, 706);
+
+  ctx.fillStyle = 'rgba(148, 163, 184, 0.9)';
+  ctx.font = '16px monospace';
+  ctx.fillText('FIRST CLASS WITH DISTINCTION • CGPA: 9.42 / 10.0', 512, 746);
+
+  ctx.fillStyle = 'rgba(100, 116, 139, 0.9)';
+  ctx.font = 'italic 15px serif';
+  ctx.fillText('Conferred at the 24th Annual Convocation held at Jnana Sangama, Belagavi', 512, 782);
+
+  // --- 3. HOLOGRAPHIC SECURITY SEAL (Bottom-Left) ---
+  ctx.save();
+  ctx.translate(260, 930);
+
+  // Prismatic iridescent radial gradient
+  const holoGrad = ctx.createRadialGradient(0, 0, 4, 0, 0, 68);
+  holoGrad.addColorStop(0, '#f472b6');   // pink
+  holoGrad.addColorStop(0.2, '#38bdf8'); // cyan
+  holoGrad.addColorStop(0.4, '#34d399'); // emerald
+  holoGrad.addColorStop(0.6, '#fbbf24'); // gold
+  holoGrad.addColorStop(0.8, '#a78bfa'); // violet
+  holoGrad.addColorStop(1, '#0369a1');   // deep blue
+
+  ctx.beginPath();
+  ctx.arc(0, 0, 68, 0, Math.PI * 2);
+  ctx.fillStyle = holoGrad;
+  ctx.globalAlpha = 0.85;
+  ctx.fill();
+  ctx.globalAlpha = 1.0;
+
+  // Concentric diffraction lines
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+  ctx.lineWidth = 1.5;
+  for (let r = 20; r <= 60; r += 10) {
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Radiating holographic sunburst rays
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+  for (let a = 0; a < 12; a++) {
+    ctx.rotate(Math.PI / 6);
+    ctx.beginPath();
+    ctx.moveTo(15, 0);
+    ctx.lineTo(64, 0);
+    ctx.stroke();
+  }
+
+  // Hologram Center Text & Microtext
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 15px monospace';
+  ctx.fillText('VTU SEAL', 0, -6);
+  ctx.font = 'bold 9px monospace';
+  ctx.fillText('GENUINE', 0, 9);
+  ctx.font = 'bold 7px monospace';
+  ctx.fillText('SECURITY HOLOGRAM', 0, 22);
+
+  // Specular sheen overlay
+  const sheenGrad = ctx.createLinearGradient(-50, -50, 50, 50);
+  sheenGrad.addColorStop(0, 'rgba(255,255,255,0.45)');
+  sheenGrad.addColorStop(0.5, 'rgba(255,255,255,0)');
+  sheenGrad.addColorStop(1, 'rgba(255,255,255,0.25)');
+  ctx.fillStyle = sheenGrad;
+  ctx.beginPath();
+  ctx.arc(0, 0, 68, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // --- 4. DIGITAL SIGNATURE STAMP (Bottom-Right) ---
+  ctx.save();
+  ctx.translate(760, 930);
+
+  // Official digital authentication stamp box
+  ctx.strokeStyle = 'rgba(6, 182, 212, 0.85)';
+  ctx.lineWidth = 2.5;
+  ctx.strokeRect(-95, -60, 190, 120);
+
+  ctx.strokeStyle = 'rgba(16, 185, 129, 0.6)';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(-88, -53, 176, 106);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(6, 182, 212, 0.95)';
+  ctx.font = 'bold 11px monospace';
+  ctx.fillText('VTU DIGITAL SIGNATURE', 0, -35);
+
+  // Simulated cursive signature
+  ctx.fillStyle = 'rgba(241, 245, 249, 0.95)';
+  ctx.font = 'italic 20px cursive';
+  ctx.fillText('Dr. B. E. Rangaswamy', 0, -8);
+
+  ctx.fillStyle = 'rgba(148, 163, 184, 0.9)';
+  ctx.font = 'bold 10px monospace';
+  ctx.fillText('CONTROLLER OF EXAMINATIONS', 0, 13);
+
+  ctx.fillStyle = 'rgba(16, 185, 129, 0.95)';
+  ctx.font = 'bold 9px monospace';
+  ctx.fillText('PKI-ECDSA-SHA256 • VALID', 0, 31);
+  ctx.fillText('KEY ID: 0x9F83A2B7 • 2026', 0, 44);
+  ctx.restore();
+
+  // Traditional signature lines
+  ctx.textAlign = 'center';
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(180, 1070);
+  ctx.lineTo(380, 1070);
+  ctx.moveTo(644, 1070);
+  ctx.lineTo(844, 1070);
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(203, 213, 225, 0.8)';
+  ctx.font = 'italic 18px cursive';
+  ctx.fillText('Arthur Pendelton, Ph.D.', 280, 1055);
+  ctx.fillText('Prof. S. Vidyashankar', 744, 1055);
+
+  ctx.font = '13px monospace';
+  ctx.fillStyle = 'rgba(100, 116, 139, 0.9)';
+  ctx.fillText('Controller of Examinations', 280, 1092);
+  ctx.fillText('Vice-Chancellor', 744, 1092);
+
+  // --- CRYPTOGRAPHIC HASH & MERKLE LEDGER BOX ---
+  ctx.strokeStyle = 'rgba(16, 185, 129, 0.5)';
+  ctx.strokeRect(100, 1140, 824, 130);
+  ctx.fillStyle = 'rgba(16, 185, 129, 0.08)';
+  ctx.fillRect(100, 1140, 824, 130);
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(16, 185, 129, 0.9)';
+  ctx.font = '13px monospace';
+  ctx.fillText('BLOCKCHAIN HASH  : 0x9f83a2b7c4d1e8902bca47102e3b8f1d7a6e5c9b', 120, 1175);
+  ctx.fillText('USN MERKLE PROOF : VTU-USN-1RE22CS089-VERIFIED-LEVEL4', 120, 1205);
+  ctx.fillText('HMAC SIGNATURE   : a72f10b3e58914c6d29871fa01cb74ef62d981ba', 120, 1235);
+
+  // Watermark Stamp
+  ctx.save();
+  ctx.translate(512, 1000);
+  ctx.rotate(-Math.PI / 14);
+  ctx.strokeStyle = 'rgba(16, 185, 129, 0.35)';
+  ctx.lineWidth = 3.5;
+  ctx.strokeRect(-170, -35, 340, 70);
+  ctx.fillStyle = 'rgba(16, 185, 129, 0.45)';
+  ctx.font = 'bold 22px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('VTU FORENSIC INTEGRITY: 99.8%', 0, 7);
+  ctx.restore();
+}
+
 export const Hero3DCanvas: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isWebGLAvailable, setIsWebGLAvailable] = useState<boolean>(true);
@@ -50,137 +357,7 @@ export const Hero3DCanvas: React.FC = () => {
     canvas.height = 1448; // Standard A4 aspect ratio
     const ctx = canvas.getContext('2d');
     if (ctx) {
-      // Dark luxurious parchment background
-      const bgGrad = ctx.createLinearGradient(0, 0, 1024, 1448);
-      bgGrad.addColorStop(0, '#0f172a');
-      bgGrad.addColorStop(0.5, '#131d36');
-      bgGrad.addColorStop(1, '#0b1120');
-      ctx.fillStyle = bgGrad;
-      ctx.fillRect(0, 0, 1024, 1448);
-
-      // Guilloche ornate double border
-      ctx.strokeStyle = 'rgba(16, 185, 129, 0.6)';
-      ctx.lineWidth = 6;
-      ctx.strokeRect(36, 36, 952, 1376);
-
-      ctx.strokeStyle = 'rgba(6, 182, 212, 0.4)';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(52, 52, 920, 1344);
-
-      // Micro-pattern security corner accents
-      const drawCorner = (x: number, y: number, angle: number) => {
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(angle);
-        ctx.strokeStyle = '#10B981';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(40, 0);
-        ctx.lineTo(40, 40);
-        ctx.stroke();
-        ctx.restore();
-      };
-      drawCorner(70, 70, 0);
-      drawCorner(954, 70, Math.PI / 2);
-      drawCorner(954, 1378, Math.PI);
-      drawCorner(70, 1378, -Math.PI / 2);
-
-      // University Seal Emblem (Center-Top)
-      ctx.save();
-      ctx.translate(512, 220);
-      ctx.beginPath();
-      ctx.arc(0, 0, 70, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(16, 185, 129, 0.15)';
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(16, 185, 129, 0.8)';
-      ctx.lineWidth = 4;
-      ctx.stroke();
-
-      // Inner seal star
-      ctx.strokeStyle = 'rgba(6, 182, 212, 0.7)';
-      ctx.lineWidth = 2;
-      for (let i = 0; i < 8; i++) {
-        ctx.rotate(Math.PI / 4);
-        ctx.strokeRect(-25, -25, 50, 50);
-      }
-      ctx.restore();
-
-      // Certificate Typography
-      ctx.textAlign = 'center';
-      ctx.fillStyle = 'rgba(241, 245, 249, 0.9)';
-      ctx.font = 'bold 36px sans-serif';
-      ctx.fillText('UNIVERSITY OF ADVANCED SCIENCES', 512, 360);
-
-      ctx.fillStyle = 'rgba(148, 163, 184, 0.8)';
-      ctx.font = '20px monospace';
-      ctx.fillText('OFFICIAL ACCREDITED DIPLOMA OF EXCELLENCE', 512, 410);
-
-      ctx.fillStyle = 'rgba(16, 185, 129, 0.9)';
-      ctx.font = 'italic 26px serif';
-      ctx.fillText('This is to certify that', 512, 490);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 44px sans-serif';
-      ctx.fillText('ALEXANDRA V. MERCER', 512, 570);
-
-      ctx.fillStyle = 'rgba(148, 163, 184, 0.85)';
-      ctx.font = '22px sans-serif';
-      ctx.fillText('has fulfilled all requirements for the degree of', 512, 640);
-
-      ctx.fillStyle = 'rgba(6, 182, 212, 0.95)';
-      ctx.font = 'bold 32px sans-serif';
-      ctx.fillText('MASTER OF SCIENCE IN ARTIFICIAL INTELLIGENCE', 512, 700);
-
-      ctx.fillStyle = 'rgba(148, 163, 184, 0.75)';
-      ctx.font = '18px monospace';
-      ctx.fillText('CUM LAUDE • HONORS IN NEURAL SYSTEMS • GPA: 3.96', 512, 750);
-
-      // Cryptographic Hash & QR Code Simulation
-      ctx.strokeStyle = 'rgba(16, 185, 129, 0.5)';
-      ctx.strokeRect(120, 850, 784, 120);
-      ctx.fillStyle = 'rgba(16, 185, 129, 0.08)';
-      ctx.fillRect(120, 850, 784, 120);
-
-      ctx.textAlign = 'left';
-      ctx.fillStyle = 'rgba(16, 185, 129, 0.9)';
-      ctx.font = '14px monospace';
-      ctx.fillText('BLOCKCHAIN HASH: 0x9f83a2b7c4d1e8902bca47102e3b8f1d7a6e5c9b', 140, 890);
-      ctx.fillText('HMAC SIGNATURE : a72f10b3e58914c6d29871fa01cb74ef62d981ba', 140, 920);
-      ctx.fillText('REGISTRY STATUS: VERIFIED BY NATIONAL HIGHER ED LEDGER', 140, 950);
-
-      // Signatures
-      ctx.textAlign = 'center';
-      ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(180, 1180);
-      ctx.lineTo(400, 1180);
-      ctx.moveTo(624, 1180);
-      ctx.lineTo(844, 1180);
-      ctx.stroke();
-
-      ctx.fillStyle = 'rgba(203, 213, 225, 0.8)';
-      ctx.font = 'italic 22px cursive';
-      ctx.fillText('Arthur Pendelton, Ph.D.', 290, 1160);
-      ctx.fillText('Victoria Sterling, Dean', 734, 1160);
-
-      ctx.font = '14px monospace';
-      ctx.fillStyle = 'rgba(100, 116, 139, 0.9)';
-      ctx.fillText('University Registrar', 290, 1210);
-      ctx.fillText('President of Academic Board', 734, 1210);
-
-      // Watermark Stamp
-      ctx.save();
-      ctx.translate(512, 1080);
-      ctx.rotate(-Math.PI / 12);
-      ctx.strokeStyle = 'rgba(16, 185, 129, 0.35)';
-      ctx.lineWidth = 4;
-      ctx.strokeRect(-160, -40, 320, 80);
-      ctx.fillStyle = 'rgba(16, 185, 129, 0.4)';
-      ctx.font = 'bold 24px monospace';
-      ctx.fillText('FORENSIC INTEGRITY: 99.4%', 0, 8);
-      ctx.restore();
+      renderVTUCertificateCanvas(ctx);
     }
 
     const certificateTexture = new THREE.CanvasTexture(canvas);
@@ -466,12 +643,52 @@ export const Hero3DCanvas: React.FC = () => {
 
       {/* Non-WebGL Fallback */}
       {!isWebGLAvailable && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-slate-900/80 rounded-3xl border border-slate-800 backdrop-blur-md">
-          <ShieldCheck className="w-16 h-16 text-emerald-400 mb-3" />
-          <h3 className="text-lg font-bold text-slate-100">3D Neural Visualizer</h3>
-          <p className="text-xs text-slate-400 max-w-xs mt-1">
-            Real-time interactive diploma mesh with laser OCR sweeping and point-cloud feature extraction.
-          </p>
+        <div
+          data-testid="hero-vtu-certificate-fallback"
+          className="absolute inset-0 flex flex-col items-center justify-between p-6 text-center bg-slate-900/95 rounded-3xl border border-emerald-500/40 backdrop-blur-md shadow-2xl overflow-hidden"
+        >
+          {/* Top: VTU Emblem & Institution Header */}
+          <div className="space-y-1 w-full">
+            <div className="w-12 h-12 rounded-full border-2 border-amber-400 bg-slate-950/80 mx-auto flex items-center justify-center text-amber-400 font-bold font-serif text-sm shadow-lg shadow-amber-400/20">
+              VTU
+            </div>
+            <h3 className="text-base sm:text-lg font-bold text-slate-100 font-serif">
+              Visvesvaraya Technological University
+            </h3>
+            <p className="text-[11px] font-mono text-cyan-400">
+              Jnana Sangama, Belagavi, Karnataka - 590018
+            </p>
+          </div>
+
+          {/* Middle: USN Field & Candidate citation */}
+          <div className="w-full max-w-xs space-y-2 py-2">
+            <div className="px-3 py-1.5 rounded-xl bg-emerald-950/40 border border-emerald-500/50 text-center">
+              <span className="text-[9px] font-mono text-emerald-300 block uppercase">
+                University Seat Number (USN)
+              </span>
+              <span className="text-base font-mono font-bold text-cyan-300">
+                1RE22CS089
+              </span>
+            </div>
+            <p className="text-sm font-bold text-white tracking-wide">
+              RAKSHITH DEVARAJ
+            </p>
+            <p className="text-xs font-semibold text-slate-200">
+              Bachelor of Engineering in Computer Science and Engineering
+            </p>
+          </div>
+
+          {/* Bottom: Holographic Seal & Digital Stamp Badges */}
+          <div className="w-full flex items-center justify-between pt-2 border-t border-slate-800 text-[10px] font-mono text-slate-400">
+            <div className="flex items-center space-x-1.5 text-pink-400">
+              <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-pink-400 via-cyan-400 to-amber-400" />
+              <span>Holographic Security Seal</span>
+            </div>
+            <div className="flex items-center space-x-1 text-emerald-400">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Controller of Examinations Digital Stamp</span>
+            </div>
+          </div>
         </div>
       )}
     </div>

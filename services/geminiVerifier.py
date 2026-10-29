@@ -351,19 +351,19 @@ class GeminiVerifier:
                 "error": str(last_error),
             }
 
-        # Parse structured JSON output
+        # Parse structured JSON output without buffering latency
         try:
-            # Clean possible accidental wrappers
             cleaned_json = response_text.strip()
-            if cleaned_json.startswith("```json"):
-                cleaned_json = cleaned_json[7:]
-            if cleaned_json.startswith("```"):
-                cleaned_json = cleaned_json[3:]
-            if cleaned_json.endswith("```"):
-                cleaned_json = cleaned_json[:-3]
-            cleaned_json = cleaned_json.strip()
-
-            parsed: Dict[str, Any] = json.loads(cleaned_json)
+            if cleaned_json.startswith("{"):
+                parsed: Dict[str, Any] = json.loads(cleaned_json)
+            else:
+                if cleaned_json.startswith("```json"):
+                    cleaned_json = cleaned_json[7:]
+                elif cleaned_json.startswith("```"):
+                    cleaned_json = cleaned_json[3:]
+                if cleaned_json.endswith("```"):
+                    cleaned_json = cleaned_json[:-3]
+                parsed = json.loads(cleaned_json.strip())
         except Exception as json_err:
             logger.error(
                 "Failed to parse Gemini JSON output: %s. Raw: %s", json_err, response_text[:300]

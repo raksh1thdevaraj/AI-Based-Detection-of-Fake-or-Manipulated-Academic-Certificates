@@ -4,6 +4,7 @@ import {
   ForensicCertificateData,
 } from './ForensicAuditCertificate';
 import { exportCertificateElementToPdf } from '../../utils/pdfExport';
+import apiClient from '../../services/api';
 import {
   X,
   Download,
@@ -31,21 +32,52 @@ export const CertificateExportModal: React.FC<Props> = ({
   if (!isOpen) return null;
 
   const handleDownloadPdf = async () => {
-    if (!certificateRef.current) return;
     try {
       setDownloading(true);
-      const cleanScanId = certificateData.scan_id.replace(/^scan_/, '').slice(0, 8);
-      const filename = `Forensic_Audit_Certificate_${cleanScanId || 'EVAL'}.pdf`;
+      const cleanScanId = (certificateData.scan_id || 'CS889B')
+        .replace(/^scan_/, '')
+        .replace(/^CS-AUDIT-/, '')
+        .replace(/^VTU-AUDIT-/, '')
+        .slice(0, 8);
+      const filename = `CertiShield_AI_Forensic_Audit_Dossier_${cleanScanId || 'EVAL'}.pdf`;
 
-      await exportCertificateElementToPdf(certificateRef.current, {
-        filename,
-      });
+      // 1. First attempt: Stream authoritative 3-page court-admissible PDF from backend ReportLab generator
+      try {
+        const resp = await apiClient.post('/verify/export-pdf', certificateData, {
+          responseType: 'blob',
+        });
+        if (resp && resp.data && resp.data.size > 500) {
+          const blob = new Blob([resp.data], { type: 'application/pdf' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(url);
+          setDownloadSuccess(true);
+          setTimeout(() => setDownloadSuccess(false), 3000);
+          return;
+        }
+      } catch (backendErr) {
+        console.warn(
+          'Backend PDF export service unavailable, falling back to multi-page client-side renderer:',
+          backendErr
+        );
+      }
 
-      setDownloadSuccess(true);
-      setTimeout(() => setDownloadSuccess(false), 3000);
+      // 2. Client-side fallback: High-resolution multi-page canvas capture
+      if (certificateRef.current) {
+        await exportCertificateElementToPdf(certificateRef.current, {
+          filename,
+        });
+        setDownloadSuccess(true);
+        setTimeout(() => setDownloadSuccess(false), 3000);
+      }
     } catch (err: unknown) {
       console.error('PDF generation error:', err);
-      alert('Unable to generate client-side PDF. Please try Print Official Certificate instead.');
+      alert('Unable to generate audit PDF. Please try Print Official Certificate instead.');
     } finally {
       setDownloading(false);
     }
@@ -61,15 +93,15 @@ export const CertificateExportModal: React.FC<Props> = ({
         {/* Top Modal Bar */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/60">
           <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
               <FileCheck className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                Forensic Verification Certificate & Audit Dossier
+                CertiShield AI • Forensic Audit Dossier & Verification Report
               </h3>
               <p className="text-[11px] text-slate-400">
-                Official compliance document with SHA-256 cryptographic attestation & verification QR
+                Official 3-page court-admissible audit document evaluating Visvesvaraya Technological University (VTU) credential validation
               </p>
             </div>
           </div>
@@ -79,17 +111,17 @@ export const CertificateExportModal: React.FC<Props> = ({
             <button
               onClick={handleDownloadPdf}
               disabled={downloading}
-              className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-bold shadow-lg shadow-amber-600/20 transition-all cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-blue-600/20 transition-all cursor-pointer disabled:opacity-50"
             >
               {downloading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Compiling PDF...</span>
+                  <span>Compiling PDF Dossier...</span>
                 </>
               ) : downloadSuccess ? (
                 <>
                   <CheckCircle className="w-4 h-4 text-emerald-300" />
-                  <span>Downloaded!</span>
+                  <span>Dossier Downloaded!</span>
                 </>
               ) : (
                 <>

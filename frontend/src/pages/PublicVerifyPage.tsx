@@ -42,6 +42,9 @@ const ForensicAuditCertificate = React.lazy(() =>
   }))
 );
 
+import { PreprocessingProgressIndicator } from '../components/progress/PreprocessingProgressIndicator';
+import { PreprocessingUpdatePayload } from '../utils/preprocessingPipeline';
+
 interface VerificationResult {
   success?: boolean;
   status?: 'authentic' | 'fraudulent' | string;
@@ -233,8 +236,15 @@ export const PublicVerifyPage: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [verifyingStep, setVerifyingStep] = useState<string>('');
   const [result, setResult] = useState<VerificationResult | null>(null);
+  const [reportVisible, setReportVisible] = useState<boolean>(false);
+  const [progressState, setProgressState] = useState<PreprocessingUpdatePayload>({
+    percentage: 0,
+    stageText: 'Validating certificate & rasterizing to 300 DPI...',
+    remainingSeconds: '1.4',
+    elapsedSeconds: '0.0',
+    currentStageIndex: 0,
+  });
   const [error, setError] = useState<string | null>(null);
   const [dashboardTab, setDashboardTab] = useState<'verifier' | 'history'>('verifier');
   const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState<number>(Date.now());
@@ -245,27 +255,34 @@ export const PublicVerifyPage: React.FC = () => {
     if (!result) return;
     try {
       setIsGeneratingPdf(true);
-      const cleanScanId = result.scan_id.replace(/^scan_/, '').slice(0, 8);
-      const filename = `Forensic_Audit_Certificate_${cleanScanId || 'EVAL'}.pdf`;
+      const cleanScanId = (result.scan_id || 'VTU889B').replace(/^scan_/, '').slice(0, 8);
+      const filename = `VTU_Forensic_Audit_Dossier_${cleanScanId || 'EVAL'}.pdf`;
 
-      // 1. First attempt: Client-side high-resolution canvas capture
+      // 1. First attempt: Stream authoritative 3-page court-admissible PDF from backend ReportLab generator
+      try {
+        const resp = await apiClient.post('/verify/export-pdf', result, { responseType: 'blob' });
+        if (resp && resp.data && resp.data.size > 500) {
+          const blob = new Blob([resp.data], { type: 'application/pdf' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(url);
+          return;
+        }
+      } catch (backendErr) {
+        console.warn('Backend PDF endpoint unavailable, using client-side renderer fallback:', backendErr);
+      }
+
+      // 2. Client-side high-resolution multi-page canvas capture fallback
       const certEl = document.getElementById('forensic-audit-certificate-hidden-root');
       if (certEl) {
         await exportCertificateElementToPdf(certEl, { filename });
         return;
       }
-
-      // 2. Fallback attempt: Stream from backend ReportLab endpoint
-      const resp = await apiClient.post('/verify/export-pdf', result, { responseType: 'blob' });
-      const blob = new Blob([resp.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
     } catch (err: unknown) {
       console.error('Direct PDF export error, launching certificate modal fallback:', err);
       setIsCertificateModalOpen(true);
@@ -279,6 +296,9 @@ export const PublicVerifyPage: React.FC = () => {
       const selected = e.target.files[0];
       setFile(selected);
       setError(null);
+      setResult(null);
+      setReportVisible(false);
+      setLoading(false);
       if (selected.type.startsWith('image/')) {
         setFilePreview(URL.createObjectURL(selected));
       } else {
@@ -293,6 +313,9 @@ export const PublicVerifyPage: React.FC = () => {
       const selected = e.dataTransfer.files[0];
       setFile(selected);
       setError(null);
+      setResult(null);
+      setReportVisible(false);
+      setLoading(false);
       if (selected.type.startsWith('image/')) {
         setFilePreview(URL.createObjectURL(selected));
       } else {
@@ -309,8 +332,48 @@ export const PublicVerifyPage: React.FC = () => {
     }
 
     setLoading(true);
+    setReportVisible(false);
     setError(null);
-    setVerifyingStep('Ingesting document and executing multi-modal forensic pipeline...');
+    const startTime = performance.now();
+
+    // Stage 1: Document Preprocessing (0% -> 25%)
+    setProgressState({
+      percentage: 15,
+      stageText: 'Optimizing 300 DPI resolution & deskewing...',
+      remainingSeconds: '1.4',
+      elapsedSeconds: '0.1',
+      currentStageIndex: 0,
+    });
+    await new Promise((r) => requestAnimationFrame(r));
+
+    // Stage 2: OCR & Layout Geometry (25% -> 55%)
+    setProgressState({
+      percentage: 45,
+      stageText: 'Extracting VTU typography & USN metadata...',
+      remainingSeconds: '1.0',
+      elapsedSeconds: ((performance.now() - startTime) / 1000).toFixed(1),
+      currentStageIndex: 1,
+    });
+    await new Promise((r) => requestAnimationFrame(r));
+
+    // Stage 3: Artifact & ELA Tamper Scan (55% -> 75%)
+    setProgressState({
+      percentage: 70,
+      stageText: 'Scanning seal borders & digital signatures (ELA)...',
+      remainingSeconds: '0.6',
+      elapsedSeconds: ((performance.now() - startTime) / 1000).toFixed(1),
+      currentStageIndex: 2,
+    });
+    await new Promise((r) => requestAnimationFrame(r));
+
+    // Stage 4: Network Inference Dispatch (Hold at 92% - 95%)
+    setProgressState({
+      percentage: 92,
+      stageText: 'Synthesizing forensic verdict...',
+      remainingSeconds: '0.2',
+      elapsedSeconds: ((performance.now() - startTime) / 1000).toFixed(1),
+      currentStageIndex: 3,
+    });
 
     try {
       const formData = new FormData();
@@ -428,9 +491,28 @@ export const PublicVerifyPage: React.FC = () => {
         details: data.details,
       };
 
+      // Stage 5: Zero-Delay Instant Handoff
+      // Pre-mount/populate the report HTML while still hidden
       setResult(normalizedResult);
       setHistoryRefreshTrigger(Date.now());
+
+      // Snap to 100% and immediately trigger CSS crossfade
+      setProgressState({
+        percentage: 100,
+        stageText: 'Report Generated!',
+        remainingSeconds: '0.0',
+        elapsedSeconds: ((performance.now() - startTime) / 1000).toFixed(1),
+        currentStageIndex: 4,
+      });
+
+      // Trigger transition without setTimeout or artificial pauses
+      requestAnimationFrame(() => {
+        setReportVisible(true);
+        setLoading(false);
+      });
     } catch (err: unknown) {
+      setLoading(false);
+      setReportVisible(false);
       if (axios.isAxiosError(err)) {
         if (!err.response || err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {
           setError(
@@ -442,15 +524,14 @@ export const PublicVerifyPage: React.FC = () => {
           setError(String(err.response.data.error));
         } else if (err.response.data?.message) {
           setError(String(err.response.data.message));
+        } else if (typeof err.response.data === 'string' && err.response.data.trim()) {
+          setError(`Server Error (${err.response.status}): ${err.response.data.trim()}`);
         } else {
           setError(`Verification failed with HTTP ${err.response.status}. Please check server logs.`);
         }
       } else {
         setError('Verification failed. Please ensure the document is clear and properly scanned.');
       }
-    } finally {
-      setLoading(false);
-      setVerifyingStep('');
     }
   };
 
@@ -680,23 +761,22 @@ export const PublicVerifyPage: React.FC = () => {
 
         {/* Right Column: Live Forensic Results (7 Cols) */}
         <div className="lg:col-span-7">
-          {loading ? (
-            <div className="min-h-[480px] rounded-3xl bg-slate-900/40 border border-slate-800/80 flex flex-col items-center justify-center p-8 text-center">
-              <div className="relative mb-6">
-                <div className="w-16 h-16 rounded-full border-4 border-emerald-500/20 border-t-emerald-400 animate-spin" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <ShieldCheck className="w-6 h-6 text-emerald-400" />
-                </div>
-              </div>
-              <h3 className="text-base font-bold text-white">Running VeriDoc Forensic Engine</h3>
-              <p className="text-xs text-emerald-400 mt-1 font-mono">{verifyingStep}</p>
-              <div className="mt-6 flex items-center space-x-2 text-[11px] text-slate-500">
-                <Clock className="w-3.5 h-3.5" />
-                <span>Target SLA: &lt; 250ms CPU Execution</span>
-              </div>
+          {/* Loading View: Smooth Asymptotic Progress & Transition */}
+          {(loading || (!reportVisible && result)) && (
+            <div className={`loading-view space-y-6 ${reportVisible ? 'hidden' : ''}`}>
+              <PreprocessingProgressIndicator
+                fileName={file?.name}
+                filePayload={file}
+                metricThroughput="DPI: 300 | Processing at 60 FPS"
+                progressOverride={progressState}
+                controlled={true}
+              />
             </div>
-          ) : result ? (
-            <div className="space-y-6 animate-in fade-in duration-300">
+          )}
+
+          {/* Pre-populated Report View: Crossfades instantly via requestAnimationFrame */}
+          {result && (
+            <div className={`report-view space-y-6 ${reportVisible ? 'visible' : ''}`}>
               {/* Main Status Banner */}
               <div
                 className={`p-6 rounded-3xl border shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
@@ -1335,7 +1415,10 @@ export const PublicVerifyPage: React.FC = () => {
                 </button>
               </div>
             </div>
-          ) : (
+          )}
+
+          {/* Initial State when no verification is in progress or completed */}
+          {!loading && !result && (
             <div className="min-h-[480px] rounded-3xl bg-slate-900/30 border border-slate-800/80 p-8 flex flex-col items-center justify-center text-center">
               <div className="w-16 h-16 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-center text-slate-400 mb-4">
                 <FileSearch className="w-8 h-8 text-emerald-400/80" />

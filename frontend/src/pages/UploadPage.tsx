@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FileDropzone } from '../components/upload/FileDropzone';
 import { FilePreview } from '../components/upload/FilePreview';
 import { PipelineStepper } from '../components/progress/PipelineStepper';
+import { PreprocessingProgressIndicator } from '../components/progress/PreprocessingProgressIndicator';
 import { usePipelineProgress } from '../hooks/usePipelineProgress';
 import { certificateService } from '../services/certificateService';
 import { ArrowRight, RotateCcw, AlertCircle } from 'lucide-react';
@@ -17,14 +18,14 @@ export const UploadPage: React.FC = () => {
   const { progress, stageIndex, status, error, reportId, isComplete, isFailed } =
     usePipelineProgress(certificateId);
 
-  // Auto-navigate to results once complete
+  // Auto-navigate to results once complete without artificial pauses
   useEffect(() => {
     if (isComplete && (reportId || certificateId)) {
       const targetId = reportId || certificateId;
-      const timeout = setTimeout(() => {
+      const rafId = requestAnimationFrame(() => {
         navigate(`/results/${targetId}`);
-      }, 1200);
-      return () => clearTimeout(timeout);
+      });
+      return () => cancelAnimationFrame(rafId);
     }
   }, [isComplete, reportId, certificateId, navigate]);
 
@@ -112,6 +113,14 @@ export const UploadPage: React.FC = () => {
               </button>
             </div>
           )}
+        </div>
+      ) : isUploading ? (
+        <div className="space-y-6">
+          <PreprocessingProgressIndicator
+            fileName={selectedFile?.name}
+            filePayload={selectedFile}
+            metricThroughput="DPI: 300 | Processing at 60 FPS"
+          />
         </div>
       ) : (
         <div className="space-y-6">

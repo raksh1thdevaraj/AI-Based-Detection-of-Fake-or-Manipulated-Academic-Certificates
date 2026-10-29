@@ -33,9 +33,9 @@ export const LandingPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-24 pb-16">
-      {/* --- HERO SECTION --- */}
-      <section className="relative pt-6 sm:pt-12">
+    <div id="about" className="space-y-24 pb-16">
+      {/* --- HERO / ABOUT US SECTION --- */}
+      <section id="hero" className="relative pt-6 sm:pt-12">
         {/* Ambient background light bleeds */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-gradient-to-tr from-emerald-500/15 via-cyan-500/10 to-indigo-500/15 rounded-full blur-[120px] pointer-events-none -z-10" />
 

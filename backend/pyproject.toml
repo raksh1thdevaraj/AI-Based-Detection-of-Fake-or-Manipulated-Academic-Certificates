@@ -61,4 +61,7 @@ ignore = ["B008", "E501"]
 
 [tool.pyright]
 include = ["app", "tests", "scripts"]
-extraPaths = [".", ".."]
+extraPaths = [".", "..", "src", "../src", "../ml"]
+venvPath = "."
+venv = ".venv"
+

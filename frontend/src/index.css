@@ -145,3 +145,30 @@
     margin: 0mm;
   }
 }
+
+/* Zero-Lag Crossfade & Smooth Progress Fill */
+.progress-fill {
+  transition: width 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: width;
+}
+
+.loading-view {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.loading-view.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
+  display: none;
+}
+
+.report-view {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+}
+.report-view.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+

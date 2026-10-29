@@ -16,6 +16,7 @@ const keepAliveAgent = new http.Agent({
 export default defineConfig({
   plugins: [react()],
   resolve: {
+    preserveSymlinks: true,
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
