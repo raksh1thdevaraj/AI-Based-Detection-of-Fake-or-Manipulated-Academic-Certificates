@@ -10,7 +10,6 @@ import logging
 from pathlib import Path
 from typing import Any
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 from app.schemas.ml_prediction import FEATURE_NAMES, FeatureImportanceItem
@@ -166,6 +165,8 @@ def plot_feature_importance(
 
     names = [it.feature_name for it in top_items]
     scores = [it.importance_score for it in top_items]
+
+    import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=(8, 6))
     bars = ax.barh(names, scores, color="#2b5c8f", edgecolor="none", height=0.65)

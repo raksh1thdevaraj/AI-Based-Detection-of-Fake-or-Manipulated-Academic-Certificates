@@ -19,7 +19,6 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from imblearn.over_sampling import SMOTE
 
 
 # ==============================================================================
@@ -284,6 +283,7 @@ class TabularDataLoader:
         )
 
         if apply_smote:
+            from imblearn.over_sampling import SMOTE
             sm = SMOTE(random_state=random_state)
             X_train, y_train = sm.fit_resample(X_train, y_train)
             print(f"[OK] Applied SMOTE: Train shape {X_train.shape} (Positives: {(y_train==1).sum()}, Negatives: {(y_train==0).sum()})")

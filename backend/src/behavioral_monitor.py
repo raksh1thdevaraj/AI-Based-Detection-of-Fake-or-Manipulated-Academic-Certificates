@@ -5,13 +5,46 @@ and unauthorized issuance attempts before certificates are recorded on ledger.
 Uses: models/behavioral_fraud_model.pkl
 """
 
+import ipaddress
 import os
 import pickle
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 import numpy as np
 import pandas as pd
-from src.data_loader import is_campus_ip, is_off_hours
+
+CAMPUS_SUBNETS = [
+    ipaddress.ip_network("10.0.0.0/8"),
+    ipaddress.ip_network("172.16.0.0/12"),
+    ipaddress.ip_network("192.168.0.0/16"),
+    ipaddress.ip_network("127.0.0.0/8"),
+]
+
+def is_campus_ip(ip_str: str) -> int:
+    """Determine if IP address belongs to campus or trusted internal subnet."""
+    try:
+        ip = ipaddress.ip_address(str(ip_str).strip())
+        for subnet in CAMPUS_SUBNETS:
+            if ip in subnet:
+                return 1
+        return 0
+    except ValueError:
+        s = str(ip_str).lower()
+        if "campus" in s or "internal" in s or s.startswith("10.") or s.startswith("192.168."):
+            return 1
+        return 0
+
+def is_off_hours(timestamp_val) -> int:
+    """Flag activity between 11:00 PM (23:00) and 5:00 AM (05:00)."""
+    try:
+        dt = pd.to_datetime(timestamp_val)
+        hour = dt.hour
+        if hour >= 23 or hour < 5:
+            return 1
+        return 0
+    except Exception:
+        return 0
+
 
 
 class BehavioralMonitor:

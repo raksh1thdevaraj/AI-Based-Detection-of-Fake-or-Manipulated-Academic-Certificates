@@ -2,6 +2,15 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
 import http from 'node:http';
+import fs from 'node:fs';
+
+// Ensure working directory is resolved to real physical path to prevent Windows NTFS junction issues
+const projectRoot = fs.realpathSync(fileURLToPath(new URL('.', import.meta.url)));
+try {
+  process.chdir(projectRoot);
+} catch {
+  // Ignore chdir failure if restricted
+}
 
 // Persistent keep-alive agent preventing socket termination during long forensic processing
 const keepAliveAgent = new http.Agent({
@@ -14,9 +23,9 @@ const keepAliveAgent = new http.Agent({
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  root: projectRoot,
   plugins: [react()],
   resolve: {
-    preserveSymlinks: true,
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
